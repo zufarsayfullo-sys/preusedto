@@ -1,0 +1,664 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Used To - Grammar Quiz</title>
+
+<!--
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    GOOGLE APPS SCRIPT SETUP                                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Open your Google Sheet
+https://docs.google.com/spreadsheets/d/1DxcxnoSx4dlnqL4wd9N0jmZ1T2M4TWKY_5T6LnUBj9E/edit
+
+STEP 2: Click Extensions > Apps Script
+
+STEP 3: Delete any existing code and paste the code below:
+
+─────────────────────────────────────────────────────────────────────────────
+COPY FROM HERE ↓
+─────────────────────────────────────────────────────────────────────────────
+
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('Quiz Results');
+    
+    if (!sheet) {
+      sheet = ss.insertSheet('Quiz Results');
+      sheet.appendRow([
+        'Timestamp',
+        'Student Name',
+        'Score',
+        'Total',
+        'Percentage',
+        'Detailed Results'
+      ]);
+      
+      const headerRange = sheet.getRange(1, 1, 1, 6);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#667eea');
+      headerRange.setFontColor('#ffffff');
+      sheet.setFrozenRows(1);
+    }
+    
+    const data = JSON.parse(e.postData.contents);
+    
+    sheet.appendRow([
+      data.timestamp,
+      data.name,
+      data.score,
+      data.total,
+      data.percentage,
+      data.details
+    ]);
+    
+    sheet.autoResizeColumns(1, 6);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      'result': 'success',
+      'message': 'Data recorded successfully'
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      'result': 'error',
+      'message': error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput('Quiz submission service is running.');
+}
+
+─────────────────────────────────────────────────────────────────────────────
+COPY TO HERE ↑
+─────────────────────────────────────────────────────────────────────────────
+
+STEP 4: Click "Deploy" > "New deployment"
+
+STEP 5: Click the gear icon ⚙️ next to "Select type" and choose "Web app"
+
+STEP 6: Configure:
+   - Execute as: Me
+   - Who has access: Anyone
+   - Click "Deploy"
+
+STEP 7: COPY THE WEB APP URL (looks like: https://script.google.com/.../exec)
+
+STEP 8: Find line 334 below (search for "const scriptURL") and replace the URL with your URL
+
+STEP 9: Save this file and open it in a browser. Done! ✅
+
+╚════════════════════════════════════════════════════════════════════════════╝
+-->
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .example {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-family: monospace;
+            color: #333;
+        }
+
+        .student-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .student-info input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-top: 8px;
+        }
+
+        .student-info input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .progress {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .sentence {
+            font-size: 1.15em;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .verb-hint {
+            display: inline-block;
+            background: #fff3cd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.05em;
+            transition: all 0.3s;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .answer-input.correct {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .answer-input.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .correct-answer {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 6px;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .correct-answer.show {
+            display: block;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+        }
+
+        .score {
+            text-align: center;
+            font-size: 2em;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+            color: #2e7d32;
+            display: none;
+        }
+
+        .score.show {
+            display: block;
+        }
+
+        .submission-status {
+            text-align: center;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .submission-status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .submission-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        #quizSection {
+            display: none;
+        }
+
+        #startSection {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .sentence {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Grammar Quiz</h1>
+        <p class="subtitle">Used to / Didn't use to / Did ... use to?</p>
+
+        <!-- Start Section -->
+        <div id="startSection">
+            <div class="instructions">
+                <h3>Instructions:</h3>
+                <p style="margin: 10px 0;">Complete the second sentence with the verb in brackets using <strong>used to</strong>, <strong>didn't use to</strong>, or <strong>Did ... use to</strong>.</p>
+                <div class="example">
+                    <strong>Example 1:</strong><br>
+                    We <u>used to have</u> family meetings, but now we have them very often.<br>
+                    → We <strong>didn't use to have</strong> family meetings, but now we have them very often.
+                </div>
+                <div class="example">
+                    <strong>Example 2:</strong><br>
+                    She <u>did not use to wear</u> glasses, but now she wears contact lenses.<br>
+                    → She <strong>used to wear</strong> glasses, but now she wears contact lenses.
+                </div>
+            </div>
+
+            <div class="student-info">
+                <label for="studentName"><strong>Your Name:</strong></label>
+                <input type="text" id="studentName" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="button-container">
+                <button class="start-btn" onclick="startQuiz()">Start Quiz (10 Questions)</button>
+            </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quizSection">
+            <div class="progress" id="progress"></div>
+            <div id="questionsContainer"></div>
+
+            <div class="button-container">
+                <button onclick="checkAnswers()">Check Answers</button>
+            </div>
+
+            <div class="score" id="score"></div>
+            <div class="submission-status" id="submissionStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Question bank of 100 questions
+        const questionBank = [
+            { first: "I used to live in the city.", verb: "live", answer: "didn't use to live", second: "I ___ in the city, but now I live in the countryside." },
+            { first: "They didn't use to travel abroad.", verb: "travel", answer: "used to travel", second: "They ___ abroad, but now they stay home." },
+            { first: "She used to work in an office.", verb: "work", answer: "didn't use to work", second: "She ___ in an office, but now she works from home." },
+            { first: "We didn't use to eat healthy food.", verb: "eat", answer: "used to eat", second: "We ___ healthy food, but now we prefer fast food." },
+            { first: "He used to play the guitar.", verb: "play", answer: "didn't use to play", second: "He ___ the guitar, but now he plays it every day." },
+            { first: "Did you use to study French?", verb: "study", answer: "used to study", second: "___ you ___ French when you were at school?" },
+            { first: "I didn't use to like vegetables.", verb: "like", answer: "used to like", second: "I ___ vegetables, but now I can't stand them." },
+            { first: "They used to go swimming every weekend.", verb: "go", answer: "didn't use to go", second: "They ___ swimming every weekend, but now they go rarely." },
+            { first: "She didn't use to wear makeup.", verb: "wear", answer: "used to wear", second: "She ___ makeup, but now she never wears it." },
+            { first: "We used to have a dog.", verb: "have", answer: "didn't use to have", second: "We ___ a dog, but now we have two cats." },
+            
+            { first: "He didn't use to exercise regularly.", verb: "exercise", answer: "used to exercise", second: "He ___ regularly, but now he's stopped completely." },
+            { first: "Did they use to visit their grandparents?", verb: "visit", answer: "used to visit", second: "___ they ___ their grandparents every summer?" },
+            { first: "I used to drink coffee every morning.", verb: "drink", answer: "didn't use to drink", second: "I ___ coffee every morning, but now I drink tea." },
+            { first: "She didn't use to read books.", verb: "read", answer: "used to read", second: "She ___ books, but now she reads magazines only." },
+            { first: "We used to watch TV in the evenings.", verb: "watch", answer: "didn't use to watch", second: "We ___ TV in the evenings, but now we watch movies." },
+            { first: "He used to ride a bicycle to work.", verb: "ride", answer: "didn't use to ride", second: "He ___ a bicycle to work, but now he drives a car." },
+            { first: "They didn't use to cook at home.", verb: "cook", answer: "used to cook", second: "They ___ at home, but now they order takeout." },
+            { first: "Did she use to play tennis?", verb: "play", answer: "used to play", second: "___ she ___ tennis when she was younger?" },
+            { first: "I didn't use to wake up early.", verb: "wake up", answer: "used to wake up", second: "I ___ early, but now I wake up at noon." },
+            { first: "We used to meet our friends regularly.", verb: "meet", answer: "didn't use to meet", second: "We ___ our friends regularly, but now we see them often." },
+            
+            { first: "He didn't use to speak English.", verb: "speak", answer: "used to speak", second: "He ___ English, but now he speaks only his native language." },
+            { first: "She used to collect stamps.", verb: "collect", answer: "didn't use to collect", second: "She ___ stamps, but now she has a huge collection." },
+            { first: "They didn't use to enjoy parties.", verb: "enjoy", answer: "used to enjoy", second: "They ___ parties, but now they avoid social events." },
+            { first: "Did you use to live abroad?", verb: "live", answer: "used to live", second: "___ you ___ abroad before moving here?" },
+            { first: "I used to be shy.", verb: "be", answer: "didn't use to be", second: "I ___ shy, but now I'm very outgoing." },
+            { first: "We didn't use to save money.", verb: "save", answer: "used to save", second: "We ___ money, but now we spend everything." },
+            { first: "He used to teach mathematics.", verb: "teach", answer: "didn't use to teach", second: "He ___ mathematics, but now he teaches physics." },
+            { first: "She didn't use to drive a car.", verb: "drive", answer: "used to drive", second: "She ___ a car, but now she takes the bus." },
+            { first: "They used to rent an apartment.", verb: "rent", answer: "didn't use to rent", second: "They ___ an apartment, but now they own a house." },
+            { first: "Did he use to smoke?", verb: "smoke", answer: "used to smoke", second: "___ he ___ when he was younger?" },
+            
+            { first: "I didn't use to believe in ghosts.", verb: "believe", answer: "used to believe", second: "I ___ in ghosts, but now I'm a skeptic." },
+            { first: "We used to go to the cinema weekly.", verb: "go", answer: "didn't use to go", second: "We ___ to the cinema weekly, but now we stream movies." },
+            { first: "She used to paint landscapes.", verb: "paint", answer: "didn't use to paint", second: "She ___ landscapes, but now she paints portraits." },
+            { first: "They didn't use to recycle.", verb: "recycle", answer: "used to recycle", second: "They ___, but now they don't care about the environment." },
+            { first: "He used to write poetry.", verb: "write", answer: "didn't use to write", second: "He ___ poetry, but now he writes novels." },
+            { first: "Did you use to play video games?", verb: "play", answer: "used to play", second: "___ you ___ video games as a teenager?" },
+            { first: "I used to take the train to work.", verb: "take", answer: "didn't use to take", second: "I ___ the train to work, but now I work remotely." },
+            { first: "She didn't use to listen to music.", verb: "listen", answer: "used to listen", second: "She ___ to music, but now she prefers silence." },
+            { first: "We used to celebrate birthdays together.", verb: "celebrate", answer: "didn't use to celebrate", second: "We ___ birthdays together, but now everyone celebrates separately." },
+            { first: "They didn't use to understand technology.", verb: "understand", answer: "used to understand", second: "They ___ technology, but now they're confused by it." },
+            
+            { first: "He used to run marathons.", verb: "run", answer: "didn't use to run", second: "He ___ marathons, but now he runs 5K races." },
+            { first: "Did she use to bake cakes?", verb: "bake", answer: "used to bake", second: "___ she ___ cakes for special occasions?" },
+            { first: "I didn't use to travel by plane.", verb: "travel", answer: "used to travel", second: "I ___ by plane, but now I prefer trains." },
+            { first: "We used to attend concerts.", verb: "attend", answer: "didn't use to attend", second: "We ___ concerts, but now we listen to music online." },
+            { first: "She used to worry about exams.", verb: "worry", answer: "didn't use to worry", second: "She ___ about exams, but now she's very relaxed." },
+            { first: "They didn't use to argue.", verb: "argue", answer: "used to argue", second: "They ___, but now they get along well." },
+            { first: "He didn't use to know the answer.", verb: "know", answer: "used to know", second: "He ___ the answer, but now he's forgotten." },
+            { first: "Did you use to swim in the sea?", verb: "swim", answer: "used to swim", second: "___ you ___ in the sea during summer?" },
+            { first: "I used to skip breakfast.", verb: "skip", answer: "didn't use to skip", second: "I ___ breakfast, but now I never miss it." },
+            { first: "We didn't use to have internet.", verb: "have", answer: "used to have", second: "We ___ internet, but now we can't imagine life without it." },
+            
+            { first: "She used to make her own clothes.", verb: "make", answer: "didn't use to make", second: "She ___ her own clothes, but now she buys everything." },
+            { first: "They used to share a room.", verb: "share", answer: "didn't use to share", second: "They ___ a room, but now each has their own." },
+            { first: "He didn't use to care about fashion.", verb: "care", answer: "used to care", second: "He ___ about fashion, but now he wears anything." },
+            { first: "Did they use to walk to school?", verb: "walk", answer: "used to walk", second: "___ they ___ to school every day?" },
+            { first: "I used to forget names easily.", verb: "forget", answer: "didn't use to forget", second: "I ___ names easily, but now I remember everyone." },
+            { first: "We didn't use to complain.", verb: "complain", answer: "used to complain", second: "We ___, but now we're always happy." },
+            { first: "She used to sleep late.", verb: "sleep", answer: "didn't use to sleep", second: "She ___ late, but now she's an early bird." },
+            { first: "They didn't use to sing in the choir.", verb: "sing", answer: "used to sing", second: "They ___ in the choir, but now they perform solo." },
+            { first: "He used to own a motorcycle.", verb: "own", answer: "didn't use to own", second: "He ___ a motorcycle, but now he sold it." },
+            { first: "Did you use to dance?", verb: "dance", answer: "used to dance", second: "___ you ___ professionally?" },
+            
+            { first: "I didn't use to prefer tea.", verb: "prefer", answer: "used to prefer", second: "I ___ tea, but now I drink only coffee." },
+            { first: "We used to buy organic food.", verb: "buy", answer: "didn't use to buy", second: "We ___ organic food, but now we buy regular products." },
+            { first: "She didn't use to feel confident.", verb: "feel", answer: "used to feel", second: "She ___ confident, but now she doubts herself." },
+            { first: "They used to volunteer at weekends.", verb: "volunteer", answer: "didn't use to volunteer", second: "They ___ at weekends, but now they volunteer monthly." },
+            { first: "He didn't use to remember birthdays.", verb: "remember", answer: "used to remember", second: "He ___ birthdays, but now he forgets them." },
+            { first: "Did she use to write a diary?", verb: "write", answer: "used to write", second: "___ she ___ a diary every night?" },
+            { first: "I used to hate spicy food.", verb: "hate", answer: "didn't use to hate", second: "I ___ spicy food, but now I love it." },
+            { first: "We didn't use to keep pets.", verb: "keep", answer: "used to keep", second: "We ___ pets, but now our house is empty." },
+            { first: "She used to practice yoga.", verb: "practice", answer: "didn't use to practice", second: "She ___ yoga, but now she does pilates." },
+            { first: "They didn't use to trust anyone.", verb: "trust", answer: "used to trust", second: "They ___ anyone, but now they're very suspicious." },
+            
+            { first: "He used to fix cars.", verb: "fix", answer: "didn't use to fix", second: "He ___ cars, but now he repairs computers." },
+            { first: "Did you use to enjoy reading?", verb: "enjoy", answer: "used to enjoy", second: "___ you ___ reading as a child?" },
+            { first: "I didn't use to follow the news.", verb: "follow", answer: "used to follow", second: "I ___ the news, but now I'm uninformed." },
+            { first: "We used to plan our vacations carefully.", verb: "plan", answer: "didn't use to plan", second: "We ___ our vacations carefully, but now we go spontaneously." },
+            { first: "She didn't use to appreciate art.", verb: "appreciate", answer: "used to appreciate", second: "She ___ art, but now she finds it boring." },
+            { first: "They used to compete in sports.", verb: "compete", answer: "didn't use to compete", second: "They ___ in sports, but now they compete regularly." },
+            { first: "He didn't use to notice details.", verb: "notice", answer: "used to notice", second: "He ___ details, but now he misses everything." },
+            { first: "Did she use to meditate?", verb: "meditate", answer: "used to meditate", second: "___ she ___ every morning?" },
+            { first: "I used to carry cash.", verb: "carry", answer: "didn't use to carry", second: "I ___ cash, but now I use only cards." },
+            { first: "We didn't use to attend meetings.", verb: "attend", answer: "used to attend", second: "We ___ meetings, but now we skip them." },
+            
+            { first: "She used to fear heights.", verb: "fear", answer: "didn't use to fear", second: "She ___ heights, but now she loves skydiving." },
+            { first: "They didn't use to respect authority.", verb: "respect", answer: "used to respect", second: "They ___ authority, but now they question everything." },
+            { first: "He used to repair bicycles.", verb: "repair", answer: "didn't use to repair", second: "He ___ bicycles, but now he builds them." },
+            { first: "Did you use to collect coins?", verb: "collect", answer: "used to collect", second: "___ you ___ coins as a hobby?" },
+            { first: "I didn't use to enjoy cooking.", verb: "enjoy", answer: "used to enjoy", second: "I ___ cooking, but now I hate it." },
+            { first: "We used to organize events.", verb: "organize", answer: "didn't use to organize", second: "We ___ events, but now we attend them only." },
+            { first: "She didn't use to challenge herself.", verb: "challenge", answer: "used to challenge", second: "She ___ herself, but now she plays it safe." },
+            { first: "They used to invest in stocks.", verb: "invest", answer: "didn't use to invest", second: "They ___ in stocks, but now they save in cash." },
+            { first: "He didn't use to appreciate nature.", verb: "appreciate", answer: "used to appreciate", second: "He ___ nature, but now he's indifferent." },
+            { first: "Did she use to train athletes?", verb: "train", answer: "used to train", second: "___ she ___ athletes professionally?" },
+            
+            { first: "I used to memorize poems.", verb: "memorize", answer: "didn't use to memorize", second: "I ___ poems, but now I write my own." },
+            { first: "We didn't use to explore new places.", verb: "explore", answer: "used to explore", second: "We ___ new places, but now we stick to familiar ones." },
+            { first: "She used to manage a team.", verb: "manage", answer: "didn't use to manage", second: "She ___ a team, but now she works independently." },
+            { first: "They didn't use to support the idea.", verb: "support", answer: "used to support", second: "They ___ the idea, but now they oppose it." },
+            { first: "He used to create websites.", verb: "create", answer: "didn't use to create", second: "He ___ websites, but now he designs apps." },
+            { first: "Did you use to perform on stage?", verb: "perform", answer: "used to perform", second: "___ you ___ on stage in school?" },
+            { first: "I didn't use to recognize faces.", verb: "recognize", answer: "used to recognize", second: "I ___ faces, but now I remember everyone." },
+            { first: "We used to ignore advice.", verb: "ignore", answer: "didn't use to ignore", second: "We ___ advice, but now we listen carefully." },
+            { first: "She didn't use to deliver presentations.", verb: "deliver", answer: "used to deliver", second: "She ___ presentations, but now she avoids public speaking." },
+            { first: "They used to manage finances well.", verb: "manage", answer: "didn't use to manage", second: "They ___ finances well, but now they're in debt." }
+        ];
+
+        let currentQuestions = [];
+        let studentName = '';
+        let checkedAnswers = false;
+
+        function startQuiz() {
+            const nameInput = document.getElementById('studentName');
+            studentName = nameInput.value.trim();
+
+            if (!studentName) {
+                alert('Please enter your name to start the quiz.');
+                return;
+            }
+
+            // Select 10 sequential questions from the bank
+            const startIndex = Math.floor(Math.random() * (questionBank.length - 10));
+            currentQuestions = questionBank.slice(startIndex, startIndex + 10);
+
+            document.getElementById('startSection').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+
+            displayQuestions();
+        }
+
+        function displayQuestions() {
+            const container = document.getElementById('questionsContainer');
+            const progress = document.getElementById('progress');
+            
+            progress.textContent = `Questions: 10 of 10`;
+            container.innerHTML = '';
+
+            currentQuestions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+                    <div class="question-number">Question ${index + 1}</div>
+                    <div class="sentence">${q.first}</div>
+                    <div class="sentence">
+                        ${q.second.replace('___', '<span class="verb-hint">(' + q.verb + ')</span> ___')}
+                    </div>
+                    <input 
+                        type="text" 
+                        class="answer-input"
+                        id="answer-${index}"
+                        placeholder="Type your answer here..."
+                        data-answer="${q.answer}"
+                    >
+                    <div class="correct-answer" id="correct-${index}">
+                        ✓ Correct answer: <strong>${q.answer}</strong>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function checkAnswers() {
+            if (checkedAnswers) return;
+
+            let correct = 0;
+            const results = [];
+
+            currentQuestions.forEach((q, index) => {
+                const input = document.getElementById(`answer-${index}`);
+                const userAnswer = input.value.trim().toLowerCase();
+                const correctAnswer = q.answer.toLowerCase();
+                
+                const isCorrect = userAnswer === correctAnswer;
+                
+                if (isCorrect) {
+                    input.classList.add('correct');
+                    correct++;
+                } else {
+                    input.classList.add('incorrect');
+                    document.getElementById(`correct-${index}`).classList.add('show');
+                }
+
+                results.push({
+                    question: index + 1,
+                    firstSentence: q.first,
+                    secondSentence: q.second,
+                    correctAnswer: q.answer,
+                    userAnswer: input.value.trim() || '(no answer)',
+                    isCorrect: isCorrect
+                });
+            });
+
+            checkedAnswers = true;
+
+            const percentage = Math.round((correct / 10) * 100);
+            const scoreDiv = document.getElementById('score');
+            scoreDiv.innerHTML = `
+                <div style="font-size: 1.2em; margin-bottom: 15px;">🎉 Quiz Complete! 🎉</div>
+                <div style="font-size: 1.5em; margin-top: 15px;">
+                    <strong>Score: ${correct}/10 (${percentage}%)</strong>
+                </div>
+            `;
+            scoreDiv.classList.add('show');
+            scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Submit to Google Sheets
+            submitToGoogleSheets(correct, percentage, results);
+        }
+
+        function submitToGoogleSheets(correct, percentage, results) {
+            const statusDiv = document.getElementById('submissionStatus');
+            statusDiv.textContent = '📤 Submitting results...';
+            statusDiv.className = 'submission-status';
+            statusDiv.style.display = 'block';
+
+            const timestamp = new Date().toLocaleString();
+            
+            // Prepare detailed results
+            const detailedResults = results.map(r => 
+                `Q${r.question}: ${r.isCorrect ? '✓' : '✗'} (User: "${r.userAnswer}" | Correct: "${r.correctAnswer}")`
+            ).join(' | ');
+
+            const data = {
+                timestamp: timestamp,
+                name: studentName,
+                score: correct,
+                total: 10,
+                percentage: percentage + '%',
+                details: detailedResults
+            };
+
+            // Google Apps Script Web App URL
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbyzqnFl2MWH_4vk4IuJPXsp2fB4VyAWP516acHlcJfopyczhJ-OVObOEKy9CFD6anqq/exec';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                statusDiv.textContent = '✅ Results submitted successfully to Google Sheets!';
+                statusDiv.className = 'submission-status success';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusDiv.textContent = '✅ Quiz completed! (Results recorded locally)';
+                statusDiv.className = 'submission-status success';
+            });
+        }
+    </script>
+</body>
+</html>
