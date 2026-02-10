@@ -1,740 +1,318 @@
-function doPost(e) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName('Quiz Results');
-    
-    if (!sheet) {
-      sheet = ss.insertSheet('Quiz Results');
-      sheet.appendRow([
-        'Timestamp',
-        'Student Name',
-        'Score',
-        'Total',
-        'Percentage',
-        'Detailed Results'
-      ]);
-      
-      const headerRange = sheet.getRange(1, 1, 1, 6);
-      headerRange.setFontWeight('bold');
-      headerRange.setBackground('#667eea');
-      headerRange.setFontColor('#ffffff');
-      sheet.setFrozenRows(1);
-    }
-    
-    const data = JSON.parse(e.postData.contents);
-    
-    sheet.appendRow([
-      data.timestamp,
-      data.name,
-      data.score,
-      data.total,
-      data.percentage,
-      data.details
-    ]);
-    
-    sheet.autoResizeColumns(1, 6);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      'result': 'success',
-      'message': 'Data recorded successfully'
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      'result': 'error',
-      'message': error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  return ContentService.createTextOutput('Quiz submission service is running.');
-}
-
-─────────────────────────────────────────────────────────────────────────────
-COPY TO HERE ↑
-─────────────────────────────────────────────────────────────────────────────
-
-STEP 4: Click "Deploy" > "New deployment"
-
-STEP 5: Click the gear icon ⚙️ next to "Select type" and choose "Web app"
-
-STEP 6: Configure:
-   - Execute as: Me
-   - Who has access: Anyone
-   - Click "Deploy"
-
-STEP 7: COPY THE WEB APP URL (looks like: https://script.google.com/.../exec)
-
-STEP 8: Find the scriptURL variable below and replace the URL with your URL
-
-STEP 9: Save this file and open it in a browser. Done! ✅
-
-╚════════════════════════════════════════════════════════════════════════════╝
--->
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Challenge: Used To</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #4e54c8;
+            --success: #28a745;
+            --error: #dc3545;
+            --accent: #f59e0b;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        h1 {
-            text-align: center;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }
-
-        .instructions {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
-        }
-
-        .instructions h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .example {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 8px 0;
-            font-family: monospace;
-            color: #333;
-        }
-
-        .student-info {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-
-        .student-info input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            margin-top: 8px;
-        }
-
-        .student-info input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .progress {
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 1.3em;
-            color: #764ba2;
-            font-weight: bold;
-        }
-
-        .question-card {
-            background: #f8f9fa;
-            border-radius: 12px;
+        .quiz-container {
+            width: 95%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.95);
             padding: 30px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            text-align: center;
         }
 
-        .question-number {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
+        h1 { color: var(--primary); margin-bottom: 5px; font-size: 1.8rem; }
+        .subtitle { color: #555; margin-bottom: 25px; font-weight: 500; }
 
-        .sentence {
-            font-size: 1.2em;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .verb-hint {
-            display: inline-block;
-            background: #fff3cd;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            color: #856404;
-            margin: 0 5px;
-        }
-
-        .answer-input {
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input[type="text"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1.1em;
-            transition: all 0.3s;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
         }
 
-        .answer-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .question-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            text-align: left;
         }
+        .sentence { font-size: 1.15rem; line-height: 1.6; color: #333; }
+        .verb-hint { background: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-        .answer-input.correct {
-            border-color: #28a745;
-            background: #d4edda;
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            margin-top: 10px;
         }
-
-        .answer-input.incorrect {
-            border-color: #dc3545;
-            background: #f8d7da;
-        }
+        .btn-primary { background: var(--primary); }
+        .btn-check { background: var(--accent); }
+        .btn-next { background: var(--success); }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .feedback {
-            display: none;
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .feedback.show {
-            display: block;
-        }
-
-        .feedback.correct {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .feedback.incorrect {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .button-container {
-            text-align: center;
-            margin-top: 30px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .start-btn {
-            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-        }
-
-        .check-btn {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-
-        .next-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-
-        .score {
-            text-align: center;
-            font-size: 2em;
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
-            color: #2e7d32;
-            display: none;
-        }
-
-        .score.show {
-            display: block;
-        }
-
-        .submission-status {
-            text-align: center;
             margin-top: 15px;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
+            font-weight: bold;
             display: none;
         }
+        .correct { display: block; background: #d4edda; color: #155724; }
+        .incorrect { display: block; background: #f8d7da; color: #721c24; }
 
-        .submission-status.success {
-            background: #d4edda;
-            color: #155724;
-            display: block;
-        }
-
-        .submission-status.error {
-            background: #f8d7da;
-            color: #721c24;
-            display: block;
-        }
-
-        .review-section {
-            display: none;
-            margin-top: 30px;
-        }
-
-        .review-section.show {
-            display: block;
-        }
-
-        .review-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #dc3545;
-        }
-
-        .review-item.correct-item {
-            border-left-color: #28a745;
-        }
-
-        #quizSection {
-            display: none;
-        }
-
-        #startSection {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 2em;
-            }
-
-            .sentence {
-                font-size: 1em;
-            }
-        }
+        .progress-text { font-weight: bold; color: var(--primary); margin-bottom: 10px; }
+        #quizSection, #resultsSection { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📝 Grammar Quiz</h1>
+
+<div class="quiz-container">
+    <div id="startSection">
+        <h1>📝 Grammar Master</h1>
         <p class="subtitle">Used to / Didn't use to / Did ... use to?</p>
-
-        <!-- Start Section -->
-        <div id="startSection">
-            <div class="instructions">
-                <h3>Instructions:</h3>
-                <p style="margin: 10px 0;">Complete the sentence with the verb in brackets. Use <strong>used to</strong>, <strong>didn't use to</strong>, or <strong>Did ... use to</strong> based on what happened in the PAST.</p>
-                <div class="example">
-                    <strong>Example 1:</strong><br>
-                    We _____ <strong>(have)</strong> family meetings, but now we have them very often.<br>
-                    → Answer: <strong>didn't use to have</strong><br>
-                    <em>(In the past we DIDN'T have them, but now we DO)</em>
-                </div>
-                <div class="example">
-                    <strong>Example 2:</strong><br>
-                    She _____ <strong>(wear)</strong> glasses, but now she wears contact lenses.<br>
-                    → Answer: <strong>used to wear</strong><br>
-                    <em>(In the past she DID wear them, but now she DOESN'T)</em>
-                </div>
-            </div>
-
-            <div class="student-info">
-                <label for="studentName"><strong>Your Name:</strong></label>
-                <input type="text" id="studentName" placeholder="Enter your full name" required>
-            </div>
-
-            <div class="button-container">
-                <button class="start-btn" onclick="startQuiz()">Start Quiz (10 Questions)</button>
-            </div>
+        <div class="input-group">
+            <label for="studentName">Student Name:</label>
+            <input type="text" id="studentName" placeholder="Enter your name to start">
         </div>
-
-        <!-- Quiz Section -->
-        <div id="quizSection">
-            <div class="progress" id="progress"></div>
-            <div id="questionContainer"></div>
-
-            <div class="button-container" id="buttonContainer">
-                <button class="check-btn" onclick="checkCurrentAnswer()" id="checkBtn">Check Answer</button>
-                <button class="next-btn" onclick="nextQuestion()" id="nextBtn" style="display: none;">Next Question</button>
-            </div>
-
-            <div class="score" id="score"></div>
-            
-            <div class="review-section" id="reviewSection">
-                <h3 style="color: #667eea; margin-bottom: 20px;">📋 Review Your Answers:</h3>
-                <div id="reviewContainer"></div>
-            </div>
-
-            <div class="submission-status" id="submissionStatus"></div>
-        </div>
+        <button class="btn btn-primary" onclick="startQuiz()">Start Quiz (10 Random Questions)</button>
     </div>
 
-    <script>
-        const questionBank = [
-            { verb: "live", answer: "used to live", sentence: "I _____ in the city, but now I live in the countryside." },
-            { verb: "travel", answer: "didn't use to travel", sentence: "They _____ abroad, but now they travel frequently." },
-            { verb: "work", answer: "used to work", sentence: "She _____ in an office, but now she works from home." },
-            { verb: "eat", answer: "didn't use to eat", sentence: "We _____ healthy food, but now we eat it every day." },
-            { verb: "play", answer: "used to play", sentence: "He _____ the guitar, but now he doesn't play anymore." },
-            { verb: "study", answer: "did you use to study", sentence: "_____ French when you were at school?" },
-            { verb: "like", answer: "didn't use to like", sentence: "I _____ vegetables, but now I love them." },
-            { verb: "go", answer: "used to go", sentence: "They _____ swimming every weekend, but now they rarely go." },
-            { verb: "wear", answer: "didn't use to wear", sentence: "She _____ makeup, but now she wears it daily." },
-            { verb: "have", answer: "used to have", sentence: "We _____ a dog, but now we have two cats." },
-            
-            { verb: "exercise", answer: "didn't use to exercise", sentence: "He _____ regularly, but now he goes to the gym daily." },
-            { verb: "visit", answer: "did they use to visit", sentence: "_____ their grandparents every summer?" },
-            { verb: "drink", answer: "used to drink", sentence: "I _____ coffee every morning, but now I drink tea." },
-            { verb: "read", answer: "didn't use to read", sentence: "She _____ books, but now she reads every night." },
-            { verb: "watch", answer: "used to watch", sentence: "We _____ TV in the evenings, but now we stream movies." },
-            { verb: "ride", answer: "used to ride", sentence: "He _____ a bicycle to work, but now he drives a car." },
-            { verb: "cook", answer: "didn't use to cook", sentence: "They _____ at home, but now they cook every meal." },
-            { verb: "play", answer: "did she use to play", sentence: "_____ tennis when she was younger?" },
-            { verb: "wake up", answer: "didn't use to wake up", sentence: "I _____ early, but now I wake up at 6 AM." },
-            { verb: "meet", answer: "used to meet", sentence: "We _____ our friends regularly, but now we rarely see them." },
-            
-            { verb: "speak", answer: "didn't use to speak", sentence: "He _____ English, but now he's fluent." },
-            { verb: "collect", answer: "used to collect", sentence: "She _____ stamps, but now she doesn't collect anything." },
-            { verb: "enjoy", answer: "didn't use to enjoy", sentence: "They _____ parties, but now they love social events." },
-            { verb: "live", answer: "did you use to live", sentence: "_____ abroad before moving here?" },
-            { verb: "be", answer: "used to be", sentence: "I _____ shy, but now I'm very outgoing." },
-            { verb: "save", answer: "didn't use to save", sentence: "We _____ money, but now we save every month." },
-            { verb: "teach", answer: "used to teach", sentence: "He _____ mathematics, but now he teaches physics." },
-            { verb: "drive", answer: "didn't use to drive", sentence: "She _____ a car, but now she drives to work." },
-            { verb: "rent", answer: "used to rent", sentence: "They _____ an apartment, but now they own a house." },
-            { verb: "smoke", answer: "did he use to smoke", sentence: "_____ when he was younger?" },
-            
-            { verb: "believe", answer: "didn't use to believe", sentence: "I _____ in ghosts, but now I do." },
-            { verb: "go", answer: "used to go", sentence: "We _____ to the cinema weekly, but now we stream movies." },
-            { verb: "paint", answer: "used to paint", sentence: "She _____ landscapes, but now she paints portraits." },
-            { verb: "recycle", answer: "didn't use to recycle", sentence: "They _____, but now they recycle everything." },
-            { verb: "write", answer: "used to write", sentence: "He _____ poetry, but now he writes novels." },
-            { verb: "play", answer: "did you use to play", sentence: "_____ video games as a teenager?" },
-            { verb: "take", answer: "used to take", sentence: "I _____ the train to work, but now I work remotely." },
-            { verb: "listen", answer: "didn't use to listen", sentence: "She _____ to music, but now she listens all day." },
-            { verb: "celebrate", answer: "used to celebrate", sentence: "We _____ birthdays together, but now everyone celebrates separately." },
-            { verb: "understand", answer: "didn't use to understand", sentence: "They _____ technology, but now they're tech experts." },
-            
-            { verb: "run", answer: "used to run", sentence: "He _____ marathons, but now he only runs 5K races." },
-            { verb: "bake", answer: "did she use to bake", sentence: "_____ cakes for special occasions?" },
-            { verb: "travel", answer: "didn't use to travel", sentence: "I _____ by plane, but now I fly everywhere." },
-            { verb: "attend", answer: "used to attend", sentence: "We _____ concerts, but now we listen to music online." },
-            { verb: "worry", answer: "used to worry", sentence: "She _____ about exams, but now she's very relaxed." },
-            { verb: "argue", answer: "didn't use to argue", sentence: "They _____, but now they argue frequently." },
-            { verb: "know", answer: "didn't use to know", sentence: "He _____ the answer, but now he knows everything." },
-            { verb: "swim", answer: "did you use to swim", sentence: "_____ in the sea during summer?" },
-            { verb: "skip", answer: "used to skip", sentence: "I _____ breakfast, but now I never miss it." },
-            { verb: "have", answer: "didn't use to have", sentence: "We _____ internet, but now we have fiber optic." },
-            
-            { verb: "make", answer: "used to make", sentence: "She _____ her own clothes, but now she buys everything." },
-            { verb: "share", answer: "used to share", sentence: "They _____ a room, but now each has their own." },
-            { verb: "care", answer: "didn't use to care", sentence: "He _____ about fashion, but now he's very stylish." },
-            { verb: "walk", answer: "did they use to walk", sentence: "_____ to school every day?" },
-            { verb: "forget", answer: "used to forget", sentence: "I _____ names easily, but now I remember everyone." },
-            { verb: "complain", answer: "didn't use to complain", sentence: "We _____, but now we complain about everything." },
-            { verb: "sleep", answer: "used to sleep", sentence: "She _____ late, but now she's an early bird." },
-            { verb: "sing", answer: "didn't use to sing", sentence: "They _____ in the choir, but now they perform regularly." },
-            { verb: "own", answer: "used to own", sentence: "He _____ a motorcycle, but now he sold it." },
-            { verb: "dance", answer: "did you use to dance", sentence: "_____ professionally?" },
-            
-            { verb: "prefer", answer: "didn't use to prefer", sentence: "I _____ tea, but now I prefer it over coffee." },
-            { verb: "buy", answer: "used to buy", sentence: "We _____ organic food, but now we buy regular products." },
-            { verb: "feel", answer: "didn't use to feel", sentence: "She _____ confident, but now she feels very confident." },
-            { verb: "volunteer", answer: "used to volunteer", sentence: "They _____ at weekends, but now they only volunteer monthly." },
-            { verb: "remember", answer: "didn't use to remember", sentence: "He _____ birthdays, but now he remembers them all." },
-            { verb: "write", answer: "did she use to write", sentence: "_____ a diary every night?" },
-            { verb: "hate", answer: "used to hate", sentence: "I _____ spicy food, but now I love it." },
-            { verb: "keep", answer: "didn't use to keep", sentence: "We _____ pets, but now we have three dogs." },
-            { verb: "practice", answer: "used to practice", sentence: "She _____ yoga, but now she does pilates." },
-            { verb: "trust", answer: "didn't use to trust", sentence: "They _____ anyone, but now they're very trusting." },
-            
-            { verb: "fix", answer: "used to fix", sentence: "He _____ cars, but now he repairs computers." },
-            { verb: "enjoy", answer: "did you use to enjoy", sentence: "_____ reading as a child?" },
-            { verb: "follow", answer: "didn't use to follow", sentence: "I _____ the news, but now I read it daily." },
-            { verb: "plan", answer: "used to plan", sentence: "We _____ our vacations carefully, but now we go spontaneously." },
-            { verb: "appreciate", answer: "didn't use to appreciate", sentence: "She _____ art, but now she loves museums." },
-            { verb: "compete", answer: "used to compete", sentence: "They _____ in sports, but now they just watch." },
-            { verb: "notice", answer: "didn't use to notice", sentence: "He _____ details, but now he's very observant." },
-            { verb: "meditate", answer: "did she use to meditate", sentence: "_____ every morning?" },
-            { verb: "carry", answer: "used to carry", sentence: "I _____ cash, but now I use only cards." },
-            { verb: "attend", answer: "didn't use to attend", sentence: "We _____ meetings, but now we attend them all." },
-            
-            { verb: "fear", answer: "used to fear", sentence: "She _____ heights, but now she loves skydiving." },
-            { verb: "respect", answer: "didn't use to respect", sentence: "They _____ authority, but now they're very respectful." },
-            { verb: "repair", answer: "used to repair", sentence: "He _____ bicycles, but now he builds them." },
-            { verb: "collect", answer: "did you use to collect", sentence: "_____ coins as a hobby?" },
-            { verb: "enjoy", answer: "didn't use to enjoy", sentence: "I _____ cooking, but now I love it." },
-            { verb: "organize", answer: "used to organize", sentence: "We _____ events, but now we only attend them." },
-            { verb: "challenge", answer: "didn't use to challenge", sentence: "She _____ herself, but now she takes on big challenges." },
-            { verb: "invest", answer: "used to invest", sentence: "They _____ in stocks, but now they save in cash." },
-            { verb: "appreciate", answer: "didn't use to appreciate", sentence: "He _____ nature, but now he loves hiking." },
-            { verb: "train", answer: "did she use to train", sentence: "_____ athletes professionally?" },
-            
-            { verb: "memorize", answer: "used to memorize", sentence: "I _____ poems, but now I write my own." },
-            { verb: "explore", answer: "didn't use to explore", sentence: "We _____ new places, but now we travel constantly." },
-            { verb: "manage", answer: "used to manage", sentence: "She _____ a team, but now she works independently." },
-            { verb: "support", answer: "didn't use to support", sentence: "They _____ the idea, but now they're strong supporters." },
-            { verb: "create", answer: "used to create", sentence: "He _____ websites, but now he designs apps." },
-            { verb: "perform", answer: "did you use to perform", sentence: "_____ on stage in school?" },
-            { verb: "recognize", answer: "didn't use to recognize", sentence: "I _____ faces, but now I'm good at it." },
-            { verb: "ignore", answer: "used to ignore", sentence: "We _____ advice, but now we listen carefully." },
-            { verb: "deliver", answer: "didn't use to deliver", sentence: "She _____ presentations, but now she presents weekly." },
-            { verb: "manage", answer: "used to manage", sentence: "They _____ finances well, but now they're in debt." }
-        ];
+    <div id="quizSection">
+        <div class="progress-text" id="progress">Question 1 of 10</div>
+        <div class="question-box">
+            <div id="sentence" class="sentence"></div>
+        </div>
+        <input type="text" id="answerInput" placeholder="Type answer here..." autocomplete="off">
+        <div id="feedback" class="feedback"></div>
+        
+        <button id="checkBtn" class="btn btn-check" onclick="checkAnswer()">Check Answer</button>
+        <button id="nextBtn" class="btn btn-next" onclick="nextQuestion()" style="display:none">Next Question</button>
+    </div>
 
-        let currentQuestions = [];
-        let currentQuestionIndex = 0;
-        let studentName = '';
-        let userAnswers = [];
-        let score = 0;
+    <div id="resultsSection">
+        <h1>Quiz Complete!</h1>
+        <p id="finalScore" style="font-size: 1.4rem; font-weight: bold;"></p>
+        <p id="statusMsg" style="color: #666;"></p>
+        <button class="btn btn-primary" onclick="location.reload()">Try 10 New Questions</button>
+    </div>
+</div>
 
-        function startQuiz() {
-            const nameInput = document.getElementById('studentName');
-            studentName = nameInput.value.trim();
+<audio id="soundCorrect" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+<audio id="soundWrong" src="https://assets.mixkit.co/active_storage/sfx/2959/2959-preview.mp3"></audio>
 
-            if (!studentName) {
-                alert('Please enter your name to start the quiz.');
-                return;
-            }
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6QvFAjEmRJi-L3MJw4b4cCduPyeVX1YO6Ij-b-5DdUX9fgH6u1j5SfefcvutM_8vf/exec";
 
-            const startIndex = Math.floor(Math.random() * (questionBank.length - 10));
-            currentQuestions = questionBank.slice(startIndex, startIndex + 10);
-            currentQuestionIndex = 0;
-            userAnswers = [];
-            score = 0;
+    const questionBank = [
+        { verb: "live", answer: "used to live", sentence: "I ___ in the city, but now I live in the countryside." },
+        { verb: "travel", answer: "didn't use to travel", sentence: "They ___ abroad, but now they travel frequently." },
+        { verb: "work", answer: "used to work", sentence: "She ___ in an office, but now she works from home." },
+        { verb: "eat", answer: "didn't use to eat", sentence: "We ___ healthy food, but now we eat it every day." },
+        { verb: "play", answer: "used to play", sentence: "He ___ the guitar, but now he doesn't play anymore." },
+        { verb: "study", answer: "did you use to study", sentence: "___ French when you were at school?" },
+        { verb: "like", answer: "didn't use to like", sentence: "I ___ vegetables, but now I love them." },
+        { verb: "go", answer: "used to go", sentence: "They ___ swimming every weekend, but now they rarely go." },
+        { verb: "wear", answer: "didn't use to wear", sentence: "She ___ makeup, but now she wears it daily." },
+        { verb: "have", answer: "used to have", sentence: "We ___ a dog, but now we have two cats." },
+        { verb: "smoke", answer: "used to smoke", sentence: "My grandfather ___ forty cigarettes a day." },
+        { verb: "be", answer: "didn't use to be", sentence: "That building ___ a cinema, but now it is a luxury hotel." },
+        { verb: "drive", answer: "did you use to drive", sentence: "___ a car before you moved to the city?" },
+        { verb: "have", answer: "didn't use to have", sentence: "I ___ a mobile phone when I was a child." },
+        { verb: "walk", answer: "used to walk", sentence: "We ___ to school every morning, rain or shine." },
+        { verb: "love", answer: "did she use to love", sentence: "___ classical music when she was younger?" },
+        { verb: "watch", answer: "used to watch", sentence: "They ___ cartoons every Saturday morning." },
+        { verb: "exercise", answer: "didn't use to exercise", sentence: "He ___ at all, but now he runs marathons." },
+        { verb: "stay", answer: "did you use to stay", sentence: "___ out late on school nights?" },
+        { verb: "visit", answer: "used to visit", sentence: "We ___ our grandparents every summer holiday." },
+        { verb: "cook", answer: "didn't use to cook", sentence: "My brother ___ , but now he is a professional chef." },
+        { verb: "be", answer: "used to be", sentence: "There ___ a large tree in front of our house." },
+        { verb: "read", answer: "did they use to read", sentence: "___ bedtime stories to you when you were little?" },
+        { verb: "spend", answer: "used to spend", sentence: "I ___ all my pocket money on comic books." },
+        { verb: "speak", answer: "didn't use to speak", sentence: "He ___ English, but now he is very fluent." },
+        { verb: "believe", answer: "did you use to believe", sentence: "___ in ghosts when you were a kid?" },
+        { verb: "wear", answer: "used to wear", sentence: "She ___ glasses, but now she has contact lenses." },
+        { verb: "help", answer: "didn't use to help", sentence: "They ___ with the housework, but now they do." },
+        { verb: "ride", answer: "used to ride", sentence: "I ___ my bike everywhere before I got my license." },
+        { verb: "enjoy", answer: "did he use to enjoy", sentence: "___ playing football at school?" },
+        { verb: "listen", answer: "used to listen", sentence: "We ___ to the radio every evening." },
+        { verb: "go", answer: "didn't use to go", sentence: "They ___ to the gym, but now they go daily." },
+        { verb: "be", answer: "did you use to be", sentence: "___ afraid of the dark?" },
+        { verb: "own", answer: "used to own", sentence: "My father ___ a vintage red sports car." },
+        { verb: "like", answer: "didn't use to like", sentence: "I ___ olives, but now I can't live without them." },
+        { verb: "buy", answer: "used to buy", sentence: "We ___ bread from the small bakery on the corner." },
+        { verb: "travel", answer: "did your parents use to travel", sentence: "___ a lot for work?" },
+        { verb: "know", answer: "didn't use to know", sentence: "I ___ how to swim, but I learned last year." },
+        { verb: "take", answer: "used to take", sentence: "She ___ the bus, but now she walks to work." },
+        { verb: "have", answer: "did you use to have", sentence: "___ long hair when you were a teenager?" },
+        { verb: "play", answer: "didn't use to play", sentence: "He ___ video games until he bought that console." },
+        { verb: "clean", answer: "used to clean", sentence: "My mother ___ the house every single Saturday." },
+        { verb: "meet", answer: "did you use to meet", sentence: "___ your friends at the park after school?" },
+        { verb: "work", answer: "used to work", sentence: "I ___ at a restaurant during my summer breaks." },
+        { verb: "cry", answer: "didn't use to cry", sentence: "She ___ much as a baby, she was very quiet." },
+        { verb: "be", answer: "used to be", sentence: "It ___ much cheaper to buy a house in this area." },
+        { verb: "get", answer: "did you use to get", sentence: "___ good grades in history class?" },
+        { verb: "sleep", answer: "used to sleep", sentence: "I ___ until noon on Sundays." },
+        { verb: "complain", answer: "didn't use to complain", sentence: "He ___ about the weather, but now he does." },
+        { verb: "study", answer: "used to study", sentence: "We ___ in the library every afternoon." },
+        { verb: "think", answer: "did you use to think", sentence: "___ that the earth was flat?" },
+        { verb: "dance", answer: "used to dance", sentence: "She ___ ballet before she injured her knee." },
+        { verb: "feel", answer: "didn't use to feel", sentence: "I ___ confident about public speaking." },
+        { verb: "collect", answer: "did he use to collect", sentence: "___ stamps when he was a boy?" },
+        { verb: "shout", answer: "used to shout", sentence: "Our old teacher ___ at us all the time." },
+        { verb: "understand", answer: "didn't use to understand", sentence: "I ___ math, but now it makes sense." },
+        { verb: "write", answer: "used to write", sentence: "She ___ letters to her penpal every month." },
+        { verb: "jump", answer: "did you use to jump", sentence: "___ on the trampoline when you were little?" },
+        { verb: "hate", answer: "used to hate", sentence: "I ___ broccoli, but now I love it." },
+        { verb: "share", answer: "didn't use to share", sentence: "They ___ their toys with each other." },
+        { verb: "watch", answer: "did you use to watch", sentence: "___ the news when you were younger?" },
+        { verb: "run", answer: "used to run", sentence: "He ___ every morning before breakfast." },
+        { verb: "wear", answer: "didn't use to wear", sentence: "I ___ a tie to work, but now I have to." },
+        { verb: "bring", answer: "used to bring", sentence: "They ___ us presents whenever they visited." },
+        { verb: "talk", answer: "did you use to talk", sentence: "___ to your stuffed animals?" },
+        { verb: "be", answer: "used to be", sentence: "There ___ a fountain in the middle of the square." },
+        { verb: "rain", answer: "didn't use to rain", sentence: "It ___ so much in this part of the country." },
+        { verb: "sing", answer: "used to sing", sentence: "She ___ in the church choir every Sunday." },
+        { verb: "lose", answer: "did you use to lose", sentence: "___ your keys as often as you do now?" },
+        { verb: "wake up", answer: "used to wake up", sentence: "I ___ at 5 AM to go to the market." }
+    ];
 
-            document.getElementById('startSection').style.display = 'none';
-            document.getElementById('quizSection').style.display = 'block';
+    let quizSet = [];
+    let currentIdx = 0;
+    let score = 0;
+    let studentName = "";
+    let sessionLogs = [];
 
-            displayQuestion();
+    function startQuiz() {
+        studentName = document.getElementById('studentName').value.trim();
+        if (!studentName) {
+            alert("Please enter your name!");
+            return;
+        }
+        
+        // Shuffle and pick 10 random questions
+        quizSet = [...questionBank].sort(() => 0.5 - Math.random()).slice(0, 10);
+        
+        currentIdx = 0;
+        score = 0;
+        sessionLogs = [];
+        
+        document.getElementById('startSection').style.display = 'none';
+        document.getElementById('quizSection').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizSet[currentIdx];
+        document.getElementById('progress').innerText = `Question ${currentIdx + 1} of 10`;
+        document.getElementById('sentence').innerHTML = q.sentence.replace('___', `<span class="verb-hint">(${q.verb})</span> _______`);
+        document.getElementById('answerInput').value = "";
+        document.getElementById('answerInput').disabled = false;
+        document.getElementById('feedback').className = 'feedback';
+        document.getElementById('checkBtn').style.display = 'block';
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('answerInput').focus();
+    }
+
+    function checkAnswer() {
+        const userAns = document.getElementById('answerInput').value.trim().toLowerCase();
+        const correctAns = quizSet[currentIdx].answer.toLowerCase();
+        const feedbackDiv = document.getElementById('feedback');
+
+        if (!userAns) return;
+
+        const isCorrect = userAns === correctAns;
+        if (isCorrect) {
+            score++;
+            feedbackDiv.innerText = "✓ Correct!";
+            feedbackDiv.className = "feedback correct";
+            document.getElementById('soundCorrect').play();
+        } else {
+            feedbackDiv.innerHTML = `✗ Incorrect. Answer: <strong>${quizSet[currentIdx].answer}</strong>`;
+            feedbackDiv.className = "feedback incorrect";
+            document.getElementById('soundWrong').play();
         }
 
-        function displayQuestion() {
-            const q = currentQuestions[currentQuestionIndex];
-            const container = document.getElementById('questionContainer');
-            const progress = document.getElementById('progress');
-            
-            progress.textContent = `Question ${currentQuestionIndex + 1} of 10`;
+        sessionLogs.push(`Q${currentIdx+1}: ${isCorrect ? '✓' : '✗'} (${userAns})`);
+        document.getElementById('answerInput').disabled = true;
+        document.getElementById('checkBtn').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'block';
+    }
 
-            const blanksCount = (q.sentence.match(/___/g) || []).length;
-            let sentenceHTML = q.sentence;
-            
-            if (blanksCount === 1) {
-                sentenceHTML = sentenceHTML.replace('___', '<span class="verb-hint">(' + q.verb + ')</span> ___');
-            } else if (blanksCount === 2) {
-                sentenceHTML = sentenceHTML.replace('___', '___').replace('___', '<span class="verb-hint">(' + q.verb + ')</span> ___');
-            }
-
-            container.innerHTML = `
-                <div class="question-card">
-                    <div class="question-number">Question ${currentQuestionIndex + 1}</div>
-                    <div class="sentence">${sentenceHTML}</div>
-                    <input 
-                        type="text" 
-                        class="answer-input"
-                        id="currentAnswer"
-                        placeholder="Type your answer here..."
-                        autocomplete="off"
-                    >
-                    <div class="feedback" id="feedback"></div>
-                </div>
-            `;
-
-            document.getElementById('currentAnswer').focus();
-            document.getElementById('checkBtn').style.display = 'inline-block';
-            document.getElementById('nextBtn').style.display = 'none';
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < 10) {
+            loadQuestion();
+        } else {
+            showFinalResults();
         }
+    }
 
-        function checkCurrentAnswer() {
-            const input = document.getElementById('currentAnswer');
-            const userAnswer = input.value.trim().toLowerCase();
-            const correctAnswer = currentQuestions[currentQuestionIndex].answer.toLowerCase();
-            const feedback = document.getElementById('feedback');
+    function showFinalResults() {
+        document.getElementById('quizSection').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+        const percent = (score / 10) * 100;
+        document.getElementById('finalScore').innerText = `${studentName}, your score: ${score}/10 (${percent}%)`;
+        submitToSheets(percent);
+    }
 
-            if (!userAnswer) {
-                alert('Please enter an answer before checking.');
-                return;
-            }
+    function submitToSheets(percentage) {
+        document.getElementById('statusMsg').innerText = "Sending to spreadsheet...";
+        const payload = {
+            timestamp: new Date().toLocaleString(),
+            name: studentName,
+            score: score,
+            total: 10,
+            percentage: percentage + "%",
+            details: sessionLogs.join(" | ")
+        };
 
-            const isCorrect = userAnswer === correctAnswer;
-
-            if (isCorrect) {
-                input.classList.add('correct');
-                feedback.className = 'feedback show correct';
-                feedback.innerHTML = '✓ Correct!';
-                score++;
-            } else {
-                input.classList.add('incorrect');
-                feedback.className = 'feedback show incorrect';
-                feedback.innerHTML = '✗ Incorrect. Correct answer: <strong>' + currentQuestions[currentQuestionIndex].answer + '</strong>';
-            }
-
-            userAnswers.push({
-                question: currentQuestionIndex + 1,
-                sentence: currentQuestions[currentQuestionIndex].sentence,
-                verb: currentQuestions[currentQuestionIndex].verb,
-                userAnswer: input.value.trim() || '(no answer)',
-                correctAnswer: currentQuestions[currentQuestionIndex].answer,
-                isCorrect: isCorrect
-            });
-
-            input.disabled = true;
-            document.getElementById('checkBtn').style.display = 'none';
-            
-            if (currentQuestionIndex < 9) {
-                document.getElementById('nextBtn').style.display = 'inline-block';
-            } else {
-                setTimeout(showResults, 1000);
-            }
-        }
-
-        function nextQuestion() {
-            currentQuestionIndex++;
-            displayQuestion();
-        }
-
-        function showResults() {
-            document.getElementById('questionContainer').innerHTML = '';
-            document.getElementById('buttonContainer').style.display = 'none';
-
-            const percentage = Math.round((score / 10) * 100);
-            const scoreDiv = document.getElementById('score');
-            scoreDiv.innerHTML = `
-                <div style="font-size: 1.2em; margin-bottom: 15px;">🎉 Quiz Complete! 🎉</div>
-                <div style="font-size: 1.5em; margin-top: 15px;">
-                    <strong>${studentName}</strong><br>
-                    Score: ${score}/10 (${percentage}%)
-                </div>
-            `;
-            scoreDiv.classList.add('show');
-
-            showReview();
-            submitToGoogleSheets(score, percentage);
-        }
-
-        function showReview() {
-            const reviewSection = document.getElementById('reviewSection');
-            const reviewContainer = document.getElementById('reviewContainer');
-            
-            reviewContainer.innerHTML = userAnswers.map(r => `
-                <div class="review-item ${r.isCorrect ? 'correct-item' : ''}">
-                    <strong>Q${r.question}:</strong> ${r.sentence.replace('___', '<span class="verb-hint">(' + r.verb + ')</span>')}<br>
-                    <strong>Your answer:</strong> <span style="color: ${r.isCorrect ? '#28a745' : '#dc3545'}">${r.userAnswer}</span><br>
-                    ${!r.isCorrect ? '<strong>Correct answer:</strong> <span style="color: #28a745">' + r.correctAnswer + '</span>' : '✓ Correct!'}
-                </div>
-            `).join('');
-
-            reviewSection.classList.add('show');
-        }
-
-        function submitToGoogleSheets(correct, percentage) {
-            const statusDiv = document.getElementById('submissionStatus');
-            statusDiv.textContent = '📤 Submitting results...';
-            statusDiv.className = 'submission-status';
-            statusDiv.style.display = 'block';
-
-            const timestamp = new Date().toLocaleString();
-            
-            const detailedResults = userAnswers.map(r => 
-                `Q${r.question}: ${r.isCorrect ? '✓' : '✗'} (User: "${r.userAnswer}" | Correct: "${r.correctAnswer}")`
-            ).join(' | ');
-
-            const data = {
-                timestamp: timestamp,
-                name: studentName,
-                score: correct,
-                total: 10,
-                percentage: percentage + '%',
-                details: detailedResults
-            };
-
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbyzqnFl2MWH_4vk4IuJPXsp2fB4VyAWP516acHlcJfopyczhJ-OVObOEKy9CFD6anqq/exec';
-
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(() => {
-                statusDiv.textContent = '✅ Results submitted successfully to Google Sheets!';
-                statusDiv.className = 'submission-status success';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                statusDiv.textContent = '✅ Quiz completed! (Results recorded locally)';
-                statusDiv.className = 'submission-status success';
-            });
-        }
-
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const checkBtn = document.getElementById('checkBtn');
-                const nextBtn = document.getElementById('nextBtn');
-                
-                if (checkBtn && checkBtn.style.display !== 'none') {
-                    checkCurrentAnswer();
-                } else if (nextBtn && nextBtn.style.display !== 'none') {
-                    nextQuestion();
-                }
-            }
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+        }).then(() => {
+            document.getElementById('statusMsg').innerText = "✅ Saved to Sheets!";
+        }).catch(() => {
+            document.getElementById('statusMsg').innerText = "Done!";
         });
-    </script>
+    }
+
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (document.getElementById('checkBtn').style.display !== 'none') checkAnswer();
+            else if (document.getElementById('nextBtn').style.display !== 'none') nextQuestion();
+        }
+    });
+</script>
 </body>
 </html>
